@@ -1,0 +1,550 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
+
+:root {
+  --primary:    #2563eb;   /* Основной — кнопки, акценты */
+  --primary-d:  #1d4ed8;   /* hover-состояние */
+  --success:    #16a34a;   /* успех, принято */
+  --warning:    #d97706;   /* предупреждение */
+  --danger:     #dc2626;   /* ошибка */
+  --bg:         #f1f5f9;   /* Фон страницы */
+  --card:       #ffffff;   /* Фон карточек */
+  --text:       #1e293b;   /* Основной текст */
+  --text-muted: #64748b;   /* Второстепенный текст */
+  --border:     #e2e8f0;   /* Цвет рамок */
+  --radius:     12px;      /* Скругление углов */
+  --shadow:     0 2px 12px rgba(0,0,0,0.08); /* Тень для карточек */
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+/* ============================================================
+   КОМПОНЕНТ: Карточка
+   ============================================================ */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  border: 1px solid var(--border);
+}
+
+/* ============================================================
+   КОМПОНЕНТ: Кнопки
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-d); transform: translateY(-1px); }
+
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger  { background: var(--danger);  color: #fff; }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.btn-outline:hover { background: var(--primary); color: #fff; }
+
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ============================================================
+   КОМПОНЕНТ: Форма
+   ============================================================ */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  background: #fff;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ============================================================
+   КОМПОНЕНТ: Бейдж / статус
+   ============================================================ */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-pending  { background: #fef3c7; color: #92400e; }
+.badge-checked  { background: #dcfce7; color: #166534; }
+.badge-graded   { background: #dbeafe; color: #1e40af; }
+.badge-overdue  { background: #fee2e2; color: #991b1b; }
+
+/* ============================================================
+   КОМПОНЕНТ: Уведомление (toast)
+   ============================================================ */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--text);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 360px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  z-index: 1000;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+#toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+#toast.success { background: var(--success); }
+#toast.error   { background: var(--danger); }
+
+/* ============================================================
+   СТРАНИЦА АВТОРИЗАЦИИ (login.html)
+   ============================================================ */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
+}
+
+.auth-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-logo .icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 28px;
+}
+
+.auth-logo h1 { font-size: 22px; color: var(--text); }
+.auth-logo p  { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+.auth-tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+}
+
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: var(--text-muted);
+}
+
+.auth-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 18px; }
+
+/* ============================================================
+   LAYOUT: Главная страница (dashboard)
+   ============================================================ */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Боковая навигация */
+.sidebar {
+  width: 260px;
+  background: #1e293b;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-logo span {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  display: block;
+}
+
+.sidebar-logo small {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.nav-item:hover  { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-item.active { background: var(--primary); color: #fff; }
+.nav-item .icon  { font-size: 18px; width: 24px; text-align: center; }
+
+.sidebar-user {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-user .name  { font-weight: 600; font-size: 14px; }
+.sidebar-user .role  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.sidebar-user .logout {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-user .logout:hover { color: #fff; }
+
+/* Основной контент */
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 32px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.page-header h2 { font-size: 24px; }
+.page-header p  { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+/* ============================================================
+   КОМПОНЕНТ: Сетка заданий
+   ============================================================ */
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.task-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.task-subject {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--primary);
+  background: #eff6ff;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.task-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.task-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   КОМПОНЕНТ: Модальное окно
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-header {
+  padding: 24px 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-header h3 { font-size: 20px; }
+
+.modal-close {
+  cursor: pointer;
+  font-size: 22px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  line-height: 1;
+  padding: 4px;
+}
+
+.modal-body { padding: 20px 28px 28px; }
+
+/* ============================================================
+   КОМПОНЕНТ: ИИ-фидбек
+   ============================================================ */
+.ai-feedback {
+  background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin-top: 16px;
+}
+
+.ai-feedback-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   КОМПОНЕНТ: Статистика (карточки с цифрами)
+   ============================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-card .stat-value {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-card .stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   КОМПОНЕНТ: Календарь (дедлайны)
+   ============================================================ */
+.deadline-list { display: flex; flex-direction: column; gap: 10px; }
+
+.deadline-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.deadline-date {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  text-align: center;
+  min-width: 50px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.deadline-date .day   { font-size: 20px; font-weight: 700; line-height: 1; }
+.deadline-date .month { font-size: 11px; text-transform: uppercase; }
+
+/* ============================================================
+   АДАПТИВНОСТЬ (для экранов до 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .main-content { margin-left: 0; padding: 16px; }
+  .tasks-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+.flex   { display: flex; }
+.gap-2  { gap: 8px; }
+.gap-3  { gap: 12px; }
+.mt-2   { margin-top: 8px; }
+.mt-3   { margin-top: 12px; }
+.mt-4   { margin-top: 16px; }
+.hidden { display: none; }
+.text-muted { color: var(--text-muted); font-size: 14px; }
+.text-center { text-align: center; }
+.loader { text-align: center; padding: 40px; color: var(--text-muted); }

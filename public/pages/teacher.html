@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Портал — Преподаватель</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ===== БОКОВОЕ МЕНЮ ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🎓 Учебный портал</span>
+      <small>Панель преподавателя</small>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="showSection('tasks')" href="#">
+        <span class="icon">📋</span> Мои задания
+      </a>
+      <a class="nav-item" onclick="showSection('create')" href="#">
+        <span class="icon">➕</span> Создать задание
+      </a>
+      <a class="nav-item" onclick="showSection('submissions')" href="#">
+        <span class="icon">📥</span> Работы студентов
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="name" id="userName">Загрузка...</div>
+      <div class="role">Преподаватель</div>
+      <div class="logout" onclick="logout()">🚪 Выйти</div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- РАЗДЕЛ: Мои задания -->
+    <section id="section-tasks">
+      <div class="page-header">
+        <div><h2>Мои задания</h2><p>Задания, которые вы создали</p></div>
+      </div>
+      <div class="tasks-grid" id="teacherTasksGrid">
+        <div class="loader">⏳ Загрузка...</div>
+      </div>
+    </section>
+
+    <!-- РАЗДЕЛ: Создать задание -->
+    <section id="section-create" class="hidden">
+      <div class="page-header">
+        <div><h2>Создать задание</h2><p>Новое задание для студентов</p></div>
+      </div>
+      <div class="card" style="max-width: 640px;">
+        <div class="auth-form">
+
+          <div class="form-group">
+            <label>Название задания</label>
+            <input type="text" id="taskTitle" placeholder="Например: Контрольная работа №1" />
+          </div>
+
+          <div class="form-group">
+            <label>Дисциплина / Предмет</label>
+            <input type="text" id="taskSubject" placeholder="Информатика, Математика..." />
+          </div>
+
+          <div class="form-group">
+            <label>Условие задания</label>
+            <textarea id="taskDesc" rows="5" placeholder="Подробно опишите, что нужно сделать студенту..."></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Срок сдачи</label>
+              <input type="date" id="taskDeadline" />
+            </div>
+            <div class="form-group">
+              <label>Максимальный балл</label>
+              <input type="number" id="taskMaxScore" value="100" min="1" max="100" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="createTask()" style="margin-top: 8px;">
+            ➕ Опубликовать задание
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- РАЗДЕЛ: Работы студентов -->
+    <section id="section-submissions" class="hidden">
+      <div class="page-header">
+        <div><h2>Работы студентов</h2><p>Выберите задание для просмотра ответов</p></div>
+      </div>
+
+      <div class="form-group" style="max-width: 360px; margin-bottom: 24px;">
+        <label>Выберите задание</label>
+        <select id="taskSelect" onchange="loadSubmissionsForTask()">
+          <option value="">— Выберите задание —</option>
+        </select>
+      </div>
+
+      <div id="submissionsContainer">
+        <p class="text-muted">Выберите задание выше, чтобы увидеть ответы студентов.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="/js/utils.js"></script>
+<script>
+  // ============================================================
+  // ИНИЦИАЛИЗАЦИЯ
+  // ============================================================
+  const user = requireLogin();
+  if (user && user.role !== 'teacher') {
+    window.location.href = '/pages/dashboard.html';
+  }
+
+  document.getElementById('userName').textContent = user?.name || '';
+  document.getElementById('taskDeadline').min = new Date().toISOString().split('T')[0]; // мин. дата = сегодня
+
+  let myTasks = [];
+  loadTeacherTasks();
+
+  // ============================================================
+  // НАВИГАЦИЯ
+  // ============================================================
+  function showSection(name) {
+    document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(`section-${name}`).classList.remove('hidden');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    if (name === 'submissions') fillTaskSelect();
+  }
+
+  // ============================================================
+  // ЗАГРУЗКА ЗАДАНИЙ ПРЕПОДАВАТЕЛЯ
+  // ============================================================
+  async function loadTeacherTasks() {
+    const data = await apiGet('/api/tasks');
+    myTasks = data.tasks || [];
+    const grid = document.getElementById('teacherTasksGrid');
+
+    if (!myTasks.length) {
+      grid.innerHTML = '<p class="text-muted">Вы ещё не создали ни одного задания.</p>';
+      return;
+    }
+
+    grid.innerHTML = myTasks.map(task => `
+      <div class="task-card">
+        <div class="task-card-header">
+          <span class="task-subject">${task.subject}</span>
+          <span class="badge badge-checked">📥 ${task.submissions_count} сдали</span>
+        </div>
+        <div class="task-title">${task.title}</div>
+        <div class="task-desc">${task.description}</div>
+        <div class="task-footer">
+          <span>📅 до ${formatDate(task.deadline)}</span>
+          <button class="btn btn-danger" style="padding: 5px 12px; font-size: 12px;"
+                  onclick="deleteTask(event, ${task.id})">🗑 Удалить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ============================================================
+  // СОЗДАНИЕ ЗАДАНИЯ
+  // ============================================================
+  async function createTask() {
+    const title     = document.getElementById('taskTitle').value.trim();
+    const subject   = document.getElementById('taskSubject').value.trim();
+    const desc      = document.getElementById('taskDesc').value.trim();
+    const deadline  = document.getElementById('taskDeadline').value;
+    const max_score = document.getElementById('taskMaxScore').value;
+
+    if (!title || !subject || !desc || !deadline) {
+      return showToast('Заполните все обязательные поля', 'error');
+    }
+
+    const data = await apiPost('/api/tasks', { title, description: desc, subject, deadline, max_score });
+
+    if (data.error) return showToast(data.error, 'error');
+
+    showToast('Задание создано и опубликовано!', 'success');
+
+    // Очищаем форму
+    ['taskTitle','taskSubject','taskDesc','taskDeadline'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+
+    loadTeacherTasks();
+  }
+
+  // ============================================================
+  // УДАЛЕНИЕ ЗАДАНИЯ
+  // ============================================================
+  async function deleteTask(e, taskId) {
+    e.stopPropagation(); // не открываем карточку при клике на кнопку
+    if (!confirm('Удалить задание? Все ответы студентов тоже удалятся.')) return;
+
+    const data = await apiDelete(`/api/tasks/${taskId}`);
+    if (data.error) return showToast(data.error, 'error');
+
+    showToast('Задание удалено.', 'success');
+    loadTeacherTasks();
+  }
+
+  // ============================================================
+  // РАБОТЫ СТУДЕНТОВ
+  // ============================================================
+  function fillTaskSelect() {
+    const sel = document.getElementById('taskSelect');
+    sel.innerHTML = '<option value="">— Выберите задание —</option>' +
+      myTasks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+  }
+
+  async function loadSubmissionsForTask() {
+    const taskId = document.getElementById('taskSelect').value;
+    const container = document.getElementById('submissionsContainer');
+
+    if (!taskId) { container.innerHTML = ''; return; }
+
+    container.innerHTML = '<div class="loader">⏳ Загрузка...</div>';
+
+    const data = await apiGet(`/api/submissions/task/${taskId}`);
+    const subs = data.submissions || [];
+
+    if (!subs.length) {
+      container.innerHTML = '<p class="text-muted">Никто ещё не сдал это задание.</p>';
+      return;
+    }
+
+    container.innerHTML = subs.map(s => `
+      <div class="card mt-2">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+          <div>
+            <strong>${s.student_name}</strong>
+            <div class="text-muted" style="font-size:13px;">${s.student_email} · ${formatDate(s.submitted_at)}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            ${statusBadge(s.status)}
+            <!-- Форма выставления оценки -->
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="number" min="0" max="100" value="${s.score || ''}"
+                     id="score-${s.id}" style="width:70px; padding: 5px 8px; border: 2px solid var(--border); border-radius:6px;"
+                     placeholder="Балл" />
+              <button class="btn btn-success" style="padding:6px 12px; font-size:13px;"
+                      onclick="gradeSubmission(${s.id})">✅ Оценить</button>
+            </div>
+          </div>
+        </div>
+
+        ${s.answer_text ? `
+          <div class="mt-3">
+            <div style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Ответ студента</div>
+            <div style="background:var(--bg); border-radius:8px; padding:12px; font-size:14px;">${s.answer_text}</div>
+          </div>` : ''}
+
+        ${s.file_path ? `
+          <div class="mt-2">
+            <a href="/uploads/${s.file_path}" target="_blank" class="btn btn-outline" style="padding:6px 14px; font-size:13px;">
+              📎 Скачать файл
+            </a>
+          </div>` : ''}
+
+        ${s.ai_feedback ? `
+          <div class="ai-feedback-label mt-3">🤖 Отзыв ИИ</div>
+          <div class="ai-feedback">${s.ai_feedback}</div>
+        ` : ''}
+      </div>
+    `).join('');
+  }
+
+  // ============================================================
+  // ВЫСТАВЛЕНИЕ ОЦЕНКИ
+  // ============================================================
+  async function gradeSubmission(subId) {
+    const score = parseInt(document.getElementById(`score-${subId}`).value);
+
+    if (isNaN(score) || score < 0 || score > 100) {
+      return showToast('Введите балл от 0 до 100', 'error');
+    }
+
+    const data = await apiPatch(`/api/submissions/${subId}/grade`, { score });
+    if (data.error) return showToast(data.error, 'error');
+
+    showToast('Оценка выставлена!', 'success');
+    loadSubmissionsForTask(); // обновляем список
+  }
+</script>
+</body>
+</html>

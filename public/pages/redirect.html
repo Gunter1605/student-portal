@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Портал</title>
+  <script src="/js/utils.js"></script>
+  <script>
+    // определение роли и перенаправление
+    const user = getCurrentUser();
+    if (!user) {
+      window.location.href = '/';
+    } else if (user.role === 'teacher') {
+      window.location.href = '/pages/teacher.html';
+    } else {
+      window.location.href = '/pages/dashboard.html';
+    }
+  </script>
+</head>
+<body>Загрузка...</body>
+</html>

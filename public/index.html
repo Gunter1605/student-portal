@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Портал — Вход</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-box">
+    
+    <div class="auth-logo">
+      <div class="icon">🎓</div>
+      <h1>Учебный портал</h1>
+      <p>Самостоятельная работа студентов</p>
+    </div>
+
+    <!-- Переключатель: Вход / Регистрация -->
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Вход</div>
+      <div class="auth-tab"        onclick="switchTab('register')">Регистрация</div>
+    </div>
+
+    <!-- ===== LOGIN FORM ===== -->
+    <div id="loginForm" class="auth-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="student@college.edu" />
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" onclick="login()" style="width:100%; justify-content:center; padding:13px;">
+        Войти
+      </button>
+      <!-- Test accs -->
+      <p class="text-muted text-center" style="font-size:12px;">
+        Нет аккаунта? Перейдите на вкладку «Регистрация»
+      </p>
+    </div>
+
+    <!-- ===== Reg form ===== -->
+    <div id="registerForm" class="auth-form hidden">
+      <div class="form-group">
+        <label>Полное имя</label>
+        <input type="text" id="regName" placeholder="Иванов Иван Иванович" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="student@college.edu" />
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="regPassword" placeholder="Минимум 6 символов" />
+      </div>
+      <div class="form-group">
+        <label>Роль</label>
+        <select id="regRole">
+          <option value="student">Студент</option>
+          <option value="teacher">Преподаватель</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="register()" style="width:100%; justify-content:center; padding:13px;">
+        Зарегистрироваться
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Notice -->
+<div id="toast"></div>
+
+<script src="/js/utils.js"></script>
+<script>
+  if (localStorage.getItem('token')) {
+    window.location.href = '/pages/dashboard.html';
+  }
+
+  // ============================================================
+  // Switch sign up/sign in
+  // ============================================================
+  function switchTab(tab) {
+    const tabs = document.querySelectorAll('.auth-tab');
+    tabs[0].classList.toggle('active', tab === 'login');
+    tabs[1].classList.toggle('active', tab === 'register');
+
+    document.getElementById('loginForm').classList.toggle('hidden',    tab !== 'login');
+    document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+  }
+
+  // ============================================================
+  // Sign in
+  // ============================================================
+  async function login() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) return showToast('Заполните все поля', 'error');
+
+    // post-request
+    const data = await apiPost('/api/auth/login', { email, password });
+
+    if (data.error) return showToast(data.error, 'error');
+
+    // localStorage save
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user',  JSON.stringify(data.user));
+
+    showToast('Добро пожаловать, ' + data.user.name + '!', 'success');
+
+    // to main page
+    setTimeout(() => { window.location.href = '/pages/dashboard.html'; }, 800);
+  }
+
+  // ============================================================
+  // Register
+  // ============================================================
+  async function register() {
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const role     = document.getElementById('regRole').value;
+
+    if (!name || !email || !password) return showToast('Заполните все поля', 'error');
+    if (password.length < 6)          return showToast('Пароль минимум 6 символов', 'error');
+
+    const data = await apiPost('/api/auth/register', { name, email, password, role });
+
+    if (data.error) return showToast(data.error, 'error');
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user',  JSON.stringify(data.user));
+
+    showToast('Аккаунт создан!', 'success');
+    setTimeout(() => { window.location.href = '/pages/dashboard.html'; }, 800);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const isLogin = !document.getElementById('loginForm').classList.contains('hidden');
+      isLogin ? login() : register();
+    }
+  });
+</script>
+</body>
+</html>

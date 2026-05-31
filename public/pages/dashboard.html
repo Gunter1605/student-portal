@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Портал — Студент</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ===== БОКОВОЕ МЕНЮ ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🎓 Учебный портал</span>
+      <small>Самостоятельная работа</small>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" id="nav-tasks"       href="#" onclick="showSection('tasks',this)">       <span class="icon">📋</span> Задания</a>
+      <a class="nav-item"        id="nav-submissions"  href="#" onclick="showSection('submissions',this)"> <span class="icon">📤</span> Мои работы</a>
+      <a class="nav-item"        id="nav-calendar"     href="#" onclick="showSection('calendar',this)">    <span class="icon">📅</span> Календарь</a>
+      <a class="nav-item"        id="nav-ai"           href="#" onclick="showSection('ai',this)">          <span class="icon">🤖</span> ИИ-помощник</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="name" id="userName">...</div>
+      <div class="role">Студент</div>
+      <div class="logout" onclick="logout()">🚪 Выйти</div>
+    </div>
+  </aside>
+
+  <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
+  <main class="main-content">
+
+    <!-- ── РАЗДЕЛ: Задания ── -->
+    <section id="section-tasks">
+      <div class="page-header">
+        <div><h2>Задания</h2><p>Список заданий от преподавателей</p></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Всего</div></div>
+        <div class="stat-card"><div class="stat-value" id="statDone">—</div><div class="stat-label">Сдано</div></div>
+        <div class="stat-card"><div class="stat-value" id="statPending">—</div><div class="stat-label">Не сдано</div></div>
+        <div class="stat-card"><div class="stat-value" id="statAvgScore">—</div><div class="stat-label">Средний балл</div></div>
+      </div>
+      <div class="tasks-grid" id="tasksGrid"><div class="loader">⏳ Загрузка заданий...</div></div>
+    </section>
+
+    <!-- ── РАЗДЕЛ: Мои работы ── -->
+    <section id="section-submissions" class="hidden">
+      <div class="page-header">
+        <div><h2>Мои работы</h2><p>История сданных решений и оценки</p></div>
+      </div>
+      <div id="submissionsList"><div class="loader">⏳ Загрузка...</div></div>
+    </section>
+
+    <!-- ── РАЗДЕЛ: Календарь ── -->
+    <section id="section-calendar" class="hidden">
+      <div class="page-header">
+        <div><h2>📅 Календарь дедлайнов</h2><p>Предстоящие сроки сдачи</p></div>
+      </div>
+      <div class="deadline-list" id="deadlineList"><div class="loader">⏳ Загрузка...</div></div>
+    </section>
+
+    <!-- ── РАЗДЕЛ: ИИ-помощник ── -->
+    <section id="section-ai" class="hidden">
+      <div class="page-header">
+        <div><h2>🤖 ИИ-помощник</h2><p>Задай любой учебный вопрос</p></div>
+        <button class="btn btn-outline" onclick="clearAIChat()" style="font-size:13px;">🗑 Очистить чат</button>
+      </div>
+
+      <!-- История диалога -->
+      <div id="aiChatHistory" style="max-width:760px;min-height:120px;max-height:460px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:4px 0;margin-bottom:16px;">
+        <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:30px 0;">Задай первый вопрос — ИИ ответит здесь 👆</p>
+      </div>
+
+      <!-- Форма ввода -->
+      <div class="card" style="max-width:760px;">
+        <div style="display:flex;gap:10px;align-items:flex-end;">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+            <input type="text" id="aiSubject" placeholder="Предмет (необязательно)"
+              style="padding:9px 13px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+            <textarea id="aiQuestion" rows="3"
+              placeholder="Задай вопрос... (Enter — отправить, Shift+Enter — новая строка)"
+              style="padding:10px 13px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+          </div>
+          <button id="aiSendBtn" class="btn btn-primary" style="padding:13px 18px;font-size:18px;" onclick="askAI()">➤</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО: Сдача задания ===== -->
+<div id="submitModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTaskTitle">Сдать задание</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalTaskDesc" class="text-muted" style="margin-bottom:20px;font-size:14px;line-height:1.6;"></div>
+      <div class="form-group">
+        <label>Ваш ответ (текст)</label>
+        <textarea id="submitText" rows="6" placeholder="Введите решение, объяснение или ответ..."></textarea>
+      </div>
+      <div class="form-group mt-3">
+        <label>Или загрузите файл (.pdf .docx .txt .py .js .zip .png .jpg)</label>
+        <input type="file" id="submitFile" accept=".pdf,.docx,.doc,.txt,.py,.js,.zip,.rar,.png,.jpg,.jpeg">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--bg);border-radius:10px;margin-top:16px;border:1px solid var(--border);">
+        <input type="checkbox" id="skipAI" style="width:17px;height:17px;cursor:pointer;accent-color:var(--primary);">
+        <label for="skipAI" style="cursor:pointer;font-size:14px;font-weight:500;margin:0;">
+          Отправить <b>без ИИ-проверки</b> <span style="color:var(--text-muted);font-weight:400;">(преподаватель проверит вручную)</span>
+        </label>
+      </div>
+      <button class="btn btn-primary mt-3" id="submitBtn" onclick="submitTask()" style="width:100%;justify-content:center;padding:13px;">
+        📤 Отправить решение
+      </button>
+      <div id="aiResult" class="hidden mt-3">
+        <div class="ai-feedback-label">🤖 Результат ИИ-проверки</div>
+        <div class="ai-feedback" id="aiResultText"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/js/utils.js"></script>
+<script>
+
+// ════════════════════════════════════════════════════════════
+// ИНИЦИАЛИЗАЦИЯ
+// ════════════════════════════════════════════════════════════
+const user = requireLogin();
+if (user && user.role === 'teacher') {
+  window.location.href = '/pages/teacher.html';
+}
+
+let currentTaskId = null;
+let allTasks      = [];
+
+document.getElementById('userName').textContent = user ? user.name : '';
+
+// Загружаем задания сразу при открытии страницы
+loadTasks();
+
+// ════════════════════════════════════════════════════════════
+// НАВИГАЦИЯ
+// ════════════════════════════════════════════════════════════
+function showSection(name, el) {
+  document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('section-' + name).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (name === 'submissions') loadSubmissions();
+  if (name === 'calendar')    loadCalendar();
+  if (name === 'ai')          renderAIChat();
+}
+
+// ════════════════════════════════════════════════════════════
+// ЗАДАНИЯ
+// ════════════════════════════════════════════════════════════
+async function loadTasks() {
+  try {
+    const data = await apiGet('/api/tasks');
+    allTasks = data.tasks || [];
+
+    const done     = allTasks.filter(t => t.submission_status).length;
+    const scores   = allTasks.filter(t => t.my_score != null).map(t => t.my_score);
+    const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : '—';
+
+    document.getElementById('statTotal').textContent   = allTasks.length;
+    document.getElementById('statDone').textContent    = done;
+    document.getElementById('statPending').textContent = allTasks.length - done;
+    document.getElementById('statAvgScore').textContent = avgScore;
+
+    const grid = document.getElementById('tasksGrid');
+    if (!allTasks.length) {
+      grid.innerHTML = '<p class="text-muted">Заданий пока нет.</p>';
+      return;
+    }
+
+    grid.innerHTML = allTasks.map(task => {
+      const overdue = isOverdue(task.deadline) && !task.submission_status;
+      return `
+        <div class="task-card" onclick="openTask(${task.id})">
+          <div class="task-card-header">
+            <span class="task-subject">${task.subject}</span>
+            ${statusBadge(task.submission_status)}
+          </div>
+          <div class="task-title">${task.title}</div>
+          <div class="task-desc">${task.description}</div>
+          <div class="task-footer">
+            <span>${overdue ? '🔴' : '📅'} до ${formatDate(task.deadline)}</span>
+            <span>⭐ до ${task.max_score} б.</span>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('tasksGrid').innerHTML = '<p class="text-muted">Ошибка загрузки: ' + e.message + '</p>';
+  }
+}
+
+function openTask(taskId) {
+  const task = allTasks.find(t => t.id === taskId);
+  if (!task) return;
+  if (task.submission_status) {
+    showToast('Вы уже сдали это задание. Смотрите раздел «Мои работы»', 'success');
+    return;
+  }
+  currentTaskId = taskId;
+  document.getElementById('modalTaskTitle').textContent = task.title;
+  document.getElementById('modalTaskDesc').textContent  = task.description;
+  document.getElementById('submitText').value = '';
+  document.getElementById('submitFile').value = '';
+  document.getElementById('skipAI').checked   = false;
+  document.getElementById('aiResult').classList.add('hidden');
+  document.getElementById('submitModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('submitModal').classList.add('hidden');
+  loadTasks();
+}
+
+// ════════════════════════════════════════════════════════════
+// СДАЧА ЗАДАНИЯ
+// ════════════════════════════════════════════════════════════
+async function submitTask() {
+  const text   = document.getElementById('submitText').value.trim();
+  const file   = document.getElementById('submitFile').files[0];
+  const skipAI = document.getElementById('skipAI').checked;
+
+  if (!text && !file) return showToast('Введите ответ или загрузите файл', 'error');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled    = true;
+  btn.textContent = skipAI ? '⏳ Отправляем...' : '⏳ ИИ проверяет...';
+
+  const formData = new FormData();
+  formData.append('task_id',     currentTaskId);
+  formData.append('answer_text', text);
+  formData.append('skip_ai',     skipAI ? 'true' : 'false');
+  if (file) formData.append('file', file);
+
+  const data = await apiUpload('/api/submissions', formData);
+
+  btn.disabled    = false;
+  btn.textContent = '📤 Отправить решение';
+
+  if (data.error) return showToast(data.error, 'error');
+
+  const feedback = data.submission && data.submission.ai_feedback;
+  if (feedback) {
+    document.getElementById('aiResultText').textContent = feedback;
+    document.getElementById('aiResult').classList.remove('hidden');
+  }
+  showToast(data.message || 'Решение принято!', 'success');
+}
+
+// ════════════════════════════════════════════════════════════
+// МОИ РАБОТЫ
+// ════════════════════════════════════════════════════════════
+async function loadSubmissions() {
+  const data = await apiGet('/api/submissions/my');
+  const list = document.getElementById('submissionsList');
+  if (!data.submissions || !data.submissions.length) {
+    list.innerHTML = '<p class="text-muted">Вы ещё не сдавали работ.</p>';
+    return;
+  }
+  list.innerHTML = data.submissions.map(s => `
+    <div class="card mt-2">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <div>
+          <strong>${s.task_title}</strong>
+          <div class="text-muted" style="font-size:13px;">${s.task_subject} · ${formatDate(s.submitted_at)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          ${statusBadge(s.status)}
+          ${s.score != null ? '<span style="font-size:18px;font-weight:700;color:var(--primary);">' + s.score + '/' + s.task_max_score + '</span>' : ''}
+          ${s.status !== 'graded' ? '<button class="btn btn-outline" style="padding:5px 12px;font-size:12px;color:var(--danger);border-color:var(--danger);" onclick="retractSubmission(' + s.id + ')">🗑 Отозвать</button>' : ''}
+        </div>
+      </div>
+      ${s.ai_feedback ? '<div class="ai-feedback-label mt-3">🤖 Отзыв ИИ</div><div class="ai-feedback">' + s.ai_feedback + '</div>' : ''}
+    </div>`).join('');
+}
+
+async function retractSubmission(subId) {
+  if (!confirm('Отозвать работу? Вы сможете сдать задание заново.')) return;
+  const token = localStorage.getItem('token');
+  const res   = await fetch('/api/submissions/' + subId, {
+    method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const data = await res.json();
+  if (data.error) return showToast(data.error, 'error');
+  showToast(data.message, 'success');
+  loadSubmissions();
+  loadTasks();
+}
+
+// ════════════════════════════════════════════════════════════
+// КАЛЕНДАРЬ
+// ════════════════════════════════════════════════════════════
+async function loadCalendar() {
+  const data = await apiGet('/api/tasks');
+  const list = document.getElementById('deadlineList');
+  const upcoming = (data.tasks || [])
+    .filter(t => !t.submission_status && !isOverdue(t.deadline))
+    .sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if (!upcoming.length) {
+    list.innerHTML = '<p class="text-muted">🎉 Все задания сданы или просрочены!</p>';
+    return;
+  }
+  list.innerHTML = upcoming.map(task => {
+    const d = formatDeadline(task.deadline);
+    return `
+      <div class="deadline-item">
+        <div class="deadline-date"><div class="day">${d.day}</div><div class="month">${d.month}</div></div>
+        <div>
+          <strong>${task.title}</strong>
+          <div class="text-muted" style="font-size:13px;">${task.subject} · до ${task.max_score} баллов</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// ИИ-ЧАТ: история, markdown, модель
+// ════════════════════════════════════════════════════════════
+const aiHistory = []; // массив { role:'user'|'ai', text, model, time }
+
+// Конвертация Markdown → HTML для отображения ответов ИИ
+function mdToHtml(raw) {
+  return raw
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:#1e293b;color:#e2e8f0;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;margin:8px 0"><code>$1</code></pre>')
+    .replace(/`([^`\n]+)`/g, '<code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px;">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^#{3} (.+)$/gm, '<h4 style="margin:10px 0 4px;font-size:15px;">$1</h4>')
+    .replace(/^#{2} (.+)$/gm, '<h3 style="margin:12px 0 4px;">$1</h3>')
+    .replace(/^#{1} (.+)$/gm, '<h2 style="margin:12px 0 4px;">$1</h2>')
+    .replace(/^[-*] (.+)$/gm, '<li style="margin:3px 0 3px 20px;">$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li style="margin:3px 0 3px 20px;">$1</li>')
+    .replace(/\n{2,}/g, '</p><p style="margin:6px 0">')
+    .replace(/\n/g, '<br>');
+}
+
+function renderAIChat() {
+  const container = document.getElementById('aiChatHistory');
+  if (!container) return;
+  if (!aiHistory.length) {
+    container.innerHTML = '<p style="color:var(--text-muted);font-size:14px;text-align:center;padding:30px 0;">Задай первый вопрос — ИИ ответит здесь 👆</p>';
+    return;
+  }
+  container.innerHTML = aiHistory.map(msg => {
+    if (msg.role === 'user') {
+      return `
+        <div style="display:flex;justify-content:flex-end;">
+          <div style="background:var(--primary);color:#fff;padding:12px 16px;border-radius:16px 16px 4px 16px;max-width:75%;font-size:14px;line-height:1.6;">
+            ${msg.text.replace(/\n/g,'<br>')}
+            <div style="font-size:11px;opacity:0.7;margin-top:6px;text-align:right;">${msg.time}</div>
+          </div>
+        </div>`;
+    } else {
+      return `
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🤖</div>
+          <div style="flex:1;">
+            <div style="background:#fff;border:1px solid var(--border);padding:14px 16px;border-radius:4px 16px 16px 16px;font-size:14px;line-height:1.7;box-shadow:var(--shadow);">
+              ${mdToHtml(msg.text)}
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:4px;">
+              🤖 <b>${msg.model || 'ИИ'}</b> · ${msg.time}
+            </div>
+          </div>
+        </div>`;
+    }
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function clearAIChat() {
+  aiHistory.length = 0;
+  renderAIChat();
+}
+
+// Enter = отправить, Shift+Enter = новая строка
+document.getElementById('aiQuestion').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAI(); }
+});
+
+async function askAI() {
+  const question = document.getElementById('aiQuestion').value.trim();
+  const subject  = document.getElementById('aiSubject').value.trim();
+  if (!question) return showToast('Введите вопрос', 'error');
+
+  const now = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  aiHistory.push({ role:'user', text:question, time:now });
+  document.getElementById('aiQuestion').value = '';
+  renderAIChat();
+
+  const btn = document.getElementById('aiSendBtn');
+  btn.disabled    = true;
+  btn.textContent = '⏳';
+
+  const data = await apiPost('/api/ai/check', { question, subject });
+
+  btn.disabled    = false;
+  btn.textContent = '➤';
+
+  const answerTime = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+
+  if (data.error) {
+    aiHistory.push({ role:'ai', text:'❌ ' + data.error, model:'Ошибка', time:answerTime });
+  } else {
+    aiHistory.push({ role:'ai', text:data.answer, model:data.model || 'openrouter/free', time:answerTime });
+  }
+  renderAIChat();
+}
+
+</script>
+</body>
+</html>
